@@ -661,8 +661,6 @@
     <div class="ff"><span class="ffi"><svg viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg></span><select class="fsel2" id="fCat"></select></div>
     <div class="lbl">Note</div>
     <div class="ff"><span class="ffi"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span><input class="finp" type="text" id="fNote" placeholder="What was this for?" oninput="applyRule()"/></div>
-    <div class="lbl">Tags <span style="color:var(--t4);font-weight:400;text-transform:none;letter-spacing:0">(comma separated)</span></div>
-    <div class="ff"><span class="ffi"><svg viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg></span><input class="finp" type="text" id="fTags" placeholder="e.g. trip, birthday"/></div>
     <div class="lbl">Date</div>
     <div class="ff"><span class="ffi"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span><input class="finp" type="date" id="fDt"/></div>
     <div class="dk-row" style="margin-bottom:6px">
@@ -944,9 +942,8 @@
     const del=pDel===t.id
       ?`<div class="dconf"><button class="dy" onclick="cfDel(${t.id})">Delete</button><button class="dn" onclick="cnDel()">Keep</button></div>`
       :`<button class="tdel" onclick="askDel(${t.id})"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>`;
-    const tags=(t.tags&&t.tags.length)?t.tags.map(tg=>`<span class="tagchip">#${tg}</span>`).join(''):'';
     const rec=t.recurring?`<span class="tagchip" style="color:var(--te);border-color:rgba(45,212,191,.3)">↻ monthly</span>`:'';
-    return`<div class="txr ${TCL[t.type]}"><div class="tl"><div class="tic" style="background:${TB[t.type]}"><svg viewBox="0 0 24 24" fill="none" stroke="${TC[t.type]}" stroke-width="2">${TI_SVG[t.type]}</svg></div><div><div class="tcat">${t.category}</div>${t.note?`<div class="tnote">${t.note}</div>`:''}<div class="tacct">${(t.account||'cash').toUpperCase()} · ${t.date}</div>${tags||rec?`<div>${tags}${rec}</div>`:''}</div></div><div class="tr2"><div class="tamt" style="color:${TC[t.type]}">${plus?'+':'-'}${fmt(t.amount)}</div>${del}</div></div>`;
+    return`<div class="txr ${TCL[t.type]}"><div class="tl"><div class="tic" style="background:${TB[t.type]}"><svg viewBox="0 0 24 24" fill="none" stroke="${TC[t.type]}" stroke-width="2">${TI_SVG[t.type]}</svg></div><div><div class="tcat">${t.category}</div>${t.note?`<div class="tnote">${t.note}</div>`:''}<div class="tacct">${(t.account||'cash').toUpperCase()} · ${t.date}</div>${rec?`<div>${rec}</div>`:''}</div></div><div class="tr2"><div class="tamt" style="color:${TC[t.type]}">${plus?'+':'-'}${fmt(t.amount)}</div>${del}</div></div>`;
   }
   function askDel(id){pDel=id;renderActive();}
   function cnDel(){pDel=null;renderActive();}
@@ -959,7 +956,7 @@
     const fa2=document.getElementById('fa')?.value||'';
     const fs2=document.getElementById('fsrt')?.value||'new';
     let txs=[...S.txs];
-    if(q)txs=txs.filter(t=>(t.category+t.note+t.type+(t.tags||[]).join(' ')).toLowerCase().includes(q));
+    if(q)txs=txs.filter(t=>(t.category+t.note+t.type).toLowerCase().includes(q));
     const tod=td();
     if(fd2==='today')txs=txs.filter(t=>t.date===tod);
     else if(fd2==='week'){const d7=new Date();d7.setDate(d7.getDate()-7);const d7s=d7.getFullYear()+'-'+pad(d7.getMonth()+1)+'-'+pad(d7.getDate());txs=txs.filter(t=>t.date>=d7s);}
@@ -1111,7 +1108,6 @@
     sType('expense');sAcct('cash');
     document.getElementById('fAmt').value='';
     document.getElementById('fNote').value='';
-    document.getElementById('fTags').value='';
     document.getElementById('fRec').checked=false;
     document.getElementById('fDt').value=td();
     document.getElementById('txOv').classList.add('on');
@@ -1139,9 +1135,8 @@
     const amt=parseFloat(document.getElementById('fAmt').value);
     if(!amt||amt<=0){toast('Enter a valid amount','er');return;}
     const dt=document.getElementById('fDt').value;if(!dt){toast('Select a date','er');return;}
-    const tags=document.getElementById('fTags').value.split(',').map(s=>s.trim()).filter(Boolean);
     const recurring=document.getElementById('fRec').checked;
-    const tx={id:Date.now(),type:cType,amount:amt,category:document.getElementById('fCat').value,note:document.getElementById('fNote').value.trim(),date:dt,account:cAcct,tags,recurring};
+    const tx={id:Date.now(),type:cType,amount:amt,category:document.getElementById('fCat').value,note:document.getElementById('fNote').value.trim(),date:dt,account:cAcct,recurring};
     S.txs.unshift(tx);cMdl();toast('Saved','ok');push();renderActive();
   }
 
@@ -1252,8 +1247,8 @@
   function exportCSV(){
     const k=mk(cOfs),mt=S.txs.filter(t=>t.date.startsWith(k));
     if(!mt.length){toast('No transactions this period','in');return;}
-    const header='Date,Type,Category,Account,Note,Tags,Amount\n';
-    const rows=mt.map(t=>[t.date,t.type,t.category,(t.account||'cash'),`"${(t.note||'').replace(/"/g,'""')}"`,(t.tags||[]).join('|'),t.amount].join(',')).join('\n');
+    const header='Date,Type,Category,Account,Note,Amount\n';
+    const rows=mt.map(t=>[t.date,t.type,t.category,(t.account||'cash'),`"${(t.note||'').replace(/"/g,'""')}"`,t.amount].join(',')).join('\n');
     const csv=header+rows,filename=`AuraFi_${k}.csv`;
     if(typeof Android!=='undefined'&&Android.saveFile){
       Android.saveFile(toB64Utf8(csv),filename,'text/csv');
